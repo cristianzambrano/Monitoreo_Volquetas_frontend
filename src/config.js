@@ -1,6 +1,6 @@
 // config.js
 
-const SERVER_IP = '54.198.235.93';
+const SERVER_IP = '3.80.77.10';
 const SERVER_PORT = '3000';
 const WEBSOCKET_PORT = '8765';
 
