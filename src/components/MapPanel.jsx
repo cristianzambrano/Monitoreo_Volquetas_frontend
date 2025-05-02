@@ -5,7 +5,7 @@ import L from 'leaflet';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const volquetaIcon = new L.Icon({
-  iconUrl: '/icons/volqueta.png',  
+  iconUrl: '/volqueta.png',  
   iconSize: [32, 32],
   iconAnchor: [16, 32],
   popupAnchor: [0, -32],
