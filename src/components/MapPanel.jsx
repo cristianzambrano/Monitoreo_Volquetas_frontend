@@ -1,6 +1,7 @@
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+
 
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -39,7 +40,7 @@ function MapPanel({ volquetas, rutas  }) {
               .split(',')
               .map(p => {
                 const [lonStr, latStr] = p.trim().split(' ');
-                return [parseFloat(latStr), parseFloat(lonStr)]; // ¡Lat, Lon en ese orden!
+                return [parseFloat(latStr), parseFloat(lonStr)]; 
               });
 
             return (
@@ -54,21 +55,27 @@ function MapPanel({ volquetas, rutas  }) {
           })
         }
 
+
         {volquetas
           .filter(v => v.latitud !== null && v.longitud !== null)
           .map((v, idx) => (
-            <Marker
-              key={idx}
-              position={{ lat: v.latitud, lng: v.longitud }}
-              icon={volquetaIcon}
-            >
+              <Marker
+                key={idx}
+                position={{ lat: v.latitud, lng: v.longitud }}
+                icon={volquetaIcon}
+              >
+              <Tooltip direction="top" offset={[0, -30]} permanent>
+                  <span className="text-xs font-semibold">{v.placa}</span>
+              </Tooltip>
+
               <Popup>
-                <strong>{v.nombre || v.placa}</strong><br/>
+                <strong>{v.nombre || v.placa}</strong><br />
                 Velocidad: {v.velocidad} km/h
               </Popup>
             </Marker>
           ))
         }
+
       </MapContainer>
     </div>
   );

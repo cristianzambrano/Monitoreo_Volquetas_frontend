@@ -77,22 +77,38 @@ function RightPanel({ volquetas, rutas }) {
               className={`p-2 rounded shadow ${getRutaBackgroundColor(ruta)}`}
             >
               <div className="flex justify-between items-center">
-                <span>{ruta.ruta_nombre}</span>
+                <span className="font-semibold">{ruta.ruta_nombre}</span>
                 <span className={`text-xs font-semibold rounded px-2 py-1 ${getRutaBadgeColor(ruta.estado)}`}>
                   {ruta.estado}
                 </span>
               </div>
-              <div className="text-xs mt-2">
-              {ruta.fueraDeRuta ? (
-                <div className="text-white">
-                  🚨 Desviado {ruta.distanciaDesvio.toFixed(1)} metros
+
+              <div className="text-xs mt-2 text-gray-800 space-y-1">
+                {/* Volqueta asignada */}
+                <div className="flex items-center space-x-2">
+                  <img src="/volqueta.png" alt="Volqueta" className="w-5 h-5" />
+                  <span className="font-medium">{ruta.volqueta_placa || 'Sin placa'}</span>
                 </div>
-              ) : (
-                <div className="text-black">
-                  ✅ En ruta
+
+
+                {ruta.fecha_inicio && (
+                <div>
+                  <span className="text-gray-600">⏰ Inicio: </span>
+                  {new Date(ruta.fecha_inicio).toLocaleTimeString('es-EC')}
                 </div>
               )}
-            </div>
+
+                {/* Estado de la ruta */}
+                {ruta.fueraDeRuta ? (
+                  <div className="text-white font-medium">
+                    🚨 Desviado {ruta.distanciaDesvio.toFixed(1)} metros
+                  </div>
+                ) : (
+                  <div className="text-green-700 font-medium font-bold">
+                    ✅ En ruta 
+                  </div>
+                )}
+              </div>
             </li>
           ))
         ) : (
@@ -100,6 +116,7 @@ function RightPanel({ volquetas, rutas }) {
         )}
       </ul>
     </div>
+
 
 
     </div>
