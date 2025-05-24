@@ -22,13 +22,37 @@ function Sidebar({ isOpen, onOpenModal }) {
           </button>
         </div>
         <div className="mt-6">
+          <div className="text-gray-400 uppercase text-xs mb-2">📣 Suscriptores</div>
+          <button onClick={() => onOpenModal('suscriptores')} className="hover:bg-gray-700 p-2 rounded block w-full text-left">
+            👥 Listado de Suscriptores
+          </button>
+    
+        </div>
+
+        <div className="mt-6">
           <div className="text-gray-400 uppercase text-xs mb-2">Eventos</div>
           <button onClick={() => onOpenModal('historialGPS')} className="hover:bg-gray-700 p-2 rounded block w-full text-left">
             🛰️ Historial GPS
           </button>
         </div>
+
+        
       </nav>
+
+        <div className="mt-auto p-4 border-t border-gray-700">
+        
+          <img
+            src="/qr.png"
+            alt="QR para unirse al bot"
+            className="w-40 mx-auto rounded"
+          />
+        
+        </div>
+
+
     </div>
+
+    
   );
 }
 

@@ -11,6 +11,7 @@ import VolquetasModal from '../components/VolquetasModal';
 import ChoferesModal from '../components/ChoferesModal'; 
 import RutasActivasModal from '../components/RutasActivasModal'; 
 import AgregarRutaModal from '../components/AgregarRutaModal'; 
+import SuscriptoresModal from '../components/SuscriptoresModal';
 
 function Dashboard() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -172,6 +173,7 @@ function Dashboard() {
       {activeModal === 'listadoRutas' && (<RutasActivasModal onClose={closeModal} 
                                           rutas={rutas} setRutas={setRutas} />)}
       {activeModal === 'nuevaRuta' && <AgregarRutaModal onClose={closeModal} />}
+      {activeModal === 'suscriptores' && <SuscriptoresModal onClose={closeModal} />}
     </div>
   );
 }
