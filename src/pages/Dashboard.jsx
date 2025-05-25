@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import * as turf from '@turf/turf';
 
 import { API_URL } from '../config';
@@ -12,7 +12,7 @@ import ChoferesModal from '../components/ChoferesModal';
 import RutasActivasModal from '../components/RutasActivasModal'; 
 import AgregarRutaModal from '../components/AgregarRutaModal'; 
 import SuscriptoresModal from '../components/SuscriptoresModal';
-import { useRef } from 'react';
+
 
 function Dashboard() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -34,64 +34,63 @@ function Dashboard() {
       });
   }, []);
 
-  const enviarAlerta = async (mensaje) => {
-      try {
-        await fetch(`${API_URL}/suscriptores/alertas`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mensaje })
-        });
-        console.log('🔔 Alerta enviada:', mensaje);
-      } catch (err) {
-        console.error('❌ Error al enviar alerta:', err.message);
+  const enviarAlerta = useCallback(async (mensaje) => {
+    try {
+      await fetch(`${API_URL}/suscriptores/alertas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje })
+      });
+      console.log('🔔 Alerta enviada:', mensaje);
+    } catch (err) {
+      console.error('❌ Error al enviar alerta:', err.message);
+    }
+  }, []);
+
+
+  const validarRutaAsignada = useCallback((imei, lat, lon) => {
+  setRutas(prevRutas => prevRutas.map(ruta => {
+    if (ruta.estado === 'en progreso' && ruta.dispositivo_id === imei) {
+      if (!ruta.trayecto) {
+        console.warn('⚠️ Ruta sin trayecto, no se puede validar');
+        return ruta;
       }
-};
 
+      const punto = turf.point([lon, lat]);
+      const coords = ruta.trayecto
+        .replace('LINESTRING(', '')
+        .replace(')', '')
+        .split(',')
+        .map(p => {
+          const [lonStr, latStr] = p.trim().split(' ');
+          return [parseFloat(lonStr), parseFloat(latStr)];
+        });
 
-  function validarRutaAsignada(imei, lat, lon) {
-    setRutas(prevRutas => prevRutas.map(ruta => {
-      if (ruta.estado === 'en progreso' && ruta.dispositivo_id === imei) { // correlacionas IMEI con ID volqueta
-        if (!ruta.trayecto) {
-          console.warn('⚠️ Ruta sin trayecto, no se puede validar');
-          return ruta;
-        }
-  
-     
-        const punto = turf.point([lon, lat]);
-        const coords = ruta.trayecto
-          .replace('LINESTRING(', '')
-          .replace(')', '')
-          .split(',')
-          .map(p => {
-            const [lonStr, latStr] = p.trim().split(' ');
-            return [parseFloat(lonStr), parseFloat(latStr)];
-          });
-  
-        const line = turf.lineString(coords);
-        const distancia = turf.pointToLineDistance(punto, line, { units: 'meters' });
-        const fuera = distancia > 30; // tolerancia de 30 metros
-        
-        const estadoAnterior = estadoRutasPrevio.current[imei];
-        if (estadoAnterior !== undefined && estadoAnterior !== fuera) {
-          if (fuera) {
-              enviarAlerta(`🚨 Volqueta ${ruta.volqueta_placa}, con el conductor ${ruta.chofer_nombre}, se ha salido de la ruta autorizada ${ruta.ruta_nombre}.`);
-          } else {
-              enviarAlerta(`✅ Volqueta ${ruta.volqueta_placa}, con el conductor ${ruta.chofer_nombre}, ha regresado a la ruta autorizada ${ruta.ruta_nombre}. `);
+      const line = turf.lineString(coords);
+      const distancia = turf.pointToLineDistance(punto, line, { units: 'meters' });
+      const fuera = distancia > 30;
+
+      const estadoAnterior = estadoRutasPrevio.current[imei];
+      if (estadoAnterior !== undefined && estadoAnterior !== fuera) {
+        if (fuera) {
+          enviarAlerta(`🚨 Volqueta ${ruta.volqueta_placa}, con el conductor ${ruta.chofer_nombre}, se ha salido de la ruta autorizada ${ruta.ruta_nombre}.`);
+        } else {
+          enviarAlerta(`✅ Volqueta ${ruta.volqueta_placa}, con el conductor ${ruta.chofer_nombre}, ha regresado a la ruta autorizada ${ruta.ruta_nombre}.`);
         }
       }
 
       estadoRutasPrevio.current[imei] = fuera;
 
-  
-        return {
-          ...ruta,
-          fueraDeRuta: fuera, 
-          distanciaDesvio: distancia
-        };
-      }
-      return ruta;
-    }));
-  }
+      return {
+        ...ruta,
+        fueraDeRuta: fuera,
+        distanciaDesvio: distancia
+      };
+    }
+    return ruta;
+  }));
+}, [setRutas, enviarAlerta]); // incluir dependencias si es necesario
+
   
   
 
@@ -112,8 +111,6 @@ function Dashboard() {
   
     // Conectar al WebSocket
     const ws = new WebSocket(WS_URL);
-
-  
     ws.onopen = () => {
       console.log('✅ WebSocket conectado');
     };
@@ -171,7 +168,7 @@ function Dashboard() {
         ws.close();
       }
     };
-  }, []);
+  }, [validarRutaAsignada]);
   
 
   const toggleSidebar = () => {
