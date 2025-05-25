@@ -12,6 +12,7 @@ import ChoferesModal from '../components/ChoferesModal';
 import RutasActivasModal from '../components/RutasActivasModal'; 
 import AgregarRutaModal from '../components/AgregarRutaModal'; 
 import SuscriptoresModal from '../components/SuscriptoresModal';
+import { useRef } from 'react';
 
 function Dashboard() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -19,6 +20,7 @@ function Dashboard() {
   
   const [volquetas, setVolquetas] = useState([]);
   const [rutas, setRutas] = useState([]);
+  const estadoRutasPrevio = useRef({});
   
   useEffect(() => {
     fetch(`${API_URL}/rutas-activas`) 
@@ -31,6 +33,20 @@ function Dashboard() {
         })));
       });
   }, []);
+
+  const enviarAlerta = async (mensaje) => {
+      try {
+        await fetch(`${API_URL}/suscriptores/alertas`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensaje })
+        });
+        console.log('🔔 Alerta enviada:', mensaje);
+      } catch (err) {
+        console.error('❌ Error al enviar alerta:', err.message);
+      }
+};
+
 
   function validarRutaAsignada(imei, lat, lon) {
     setRutas(prevRutas => prevRutas.map(ruta => {
@@ -52,12 +68,24 @@ function Dashboard() {
           });
   
         const line = turf.lineString(coords);
-  
         const distancia = turf.pointToLineDistance(punto, line, { units: 'meters' });
+        const fuera = distancia > 30; // tolerancia de 30 metros
+        
+        const estadoAnterior = estadoRutasPrevio.current[imei];
+        if (estadoAnterior !== undefined && estadoAnterior !== fuera) {
+          if (fuera) {
+              enviarAlerta(`🚨 Volqueta ${ruta.volqueta_placa}, con el conductor ${ruta.chofer_nombre}, se ha salido de la ruta autorizada ${ruta.ruta_nombre}.`);
+          } else {
+              enviarAlerta(`✅ Volqueta ${ruta.volqueta_placa}, con el conductor ${ruta.chofer_nombre}, ha regresado a la ruta autorizada ${ruta.ruta_nombre}. `);
+        }
+      }
+
+      estadoRutasPrevio.current[imei] = fuera;
+
   
         return {
           ...ruta,
-          fueraDeRuta: distancia > 30, // tolerancia de 30 metros
+          fueraDeRuta: fuera, 
           distanciaDesvio: distancia
         };
       }
@@ -101,7 +129,7 @@ function Dashboard() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('📡 Datos recibidos:', data);
+        //console.log('📡 Datos recibidos:', data);
   
         setVolquetas(prevVolquetas =>
           prevVolquetas.map(volqueta => {
